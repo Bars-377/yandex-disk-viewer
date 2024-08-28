@@ -1,71 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <!-- Определяет документ как HTML5 и устанавливает язык как английский -->
     <meta charset="UTF-8">
+    <!-- Устанавливает кодировку документа как UTF-8 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Устанавливает область просмотра для адаптивного дизайна, чтобы страницы корректно отображались на мобильных устройствах -->
     <title>Просмотрщик файлов Яндекс Диска</title>
+    <!-- Заголовок страницы, который будет отображаться в браузере -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Подключение файла CSS для стилизации страницы -->
+
     <script>
+        // Функция для переключения состояния всех чекбоксов
         function toggleSelectAll() {
             const checkboxes = document.querySelectorAll('input[type="checkbox"][name="paths"]');
+            // Находим все чекбоксы с именем "paths"
             const selectAllCheckbox = document.getElementById('select_all');
+            // Находим чекбокс "Выбрать все"
             checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+            // Устанавливаем состояние каждого чекбокса в соответствии с состоянием чекбокса "Выбрать все"
         }
 
+        // Функция для обновления состояния чекбокса "Выбрать все"
         function updateSelectAll() {
             const checkboxes = document.querySelectorAll('input[type="checkbox"][name="paths"]');
+            // Находим все чекбоксы с именем "paths"
             const selectAllCheckbox = document.getElementById('select_all');
+            // Находим чекбокс "Выбрать все"
             const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            // Проверяем, все ли чекбоксы выбраны
             selectAllCheckbox.checked = allChecked;
+            // Устанавливаем состояние чекбокса "Выбрать все" в зависимости от состояния всех остальных чекбоксов
         }
 
+        // Функция для валидации выбора файлов перед отправкой формы
         function validateSelection(event) {
             const checkboxes = document.querySelectorAll('input[type="checkbox"][name="paths"]');
+            // Находим все чекбоксы с именем "paths"
             const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+            // Проверяем, выбран ли хотя бы один чекбокс
 
             if (!anyChecked) {
                 alert('Пожалуйста, выберите хотя бы один файл для загрузки.');
+                // Если ни один файл не выбран, показываем предупреждение
                 event.preventDefault(); // Останавливаем отправку формы
             }
         }
     </script>
 </head>
+
 <body>
     <div class="container">
+        <!-- Основной контейнер для контента страницы -->
         <h1>Просмотрщик файлов Яндекс Диска</h1>
+        <!-- Заголовок страницы -->
         <form method="POST">
+            <!-- Форма для ввода публичной ссылки и выбора типа файла -->
             <label for="public_key">Введите публичную ссылку:</label>
+            <!-- Метка для поля ввода публичной ссылки -->
             <input type="text" id="public_key" name="public_key" value="{{ public_key }}" required>
+            <!-- Поле ввода для публичной ссылки с обязательным заполнением -->
 
             <label for="file_type">Тип файла:</label>
+            <!-- Метка для выпадающего списка выбора типа файла -->
             <select id="file_type" name="file_type">
+                <!-- Выпадающий список для выбора типа файла -->
                 {% for key, value in file_types.items() %}
-                <option value="{{ key }}" {% if selected_file_type == key %}selected{% endif %}>{{ value }}</option>
+                <!-- Цикл для генерации опций выбора на основе доступных типов файлов -->
+                <option value="{{ key }}" {% if selected_file_type==key %}selected{% endif %}>{{ value }}</option>
+                <!-- Каждая опция выпадающего списка, выбранная по умолчанию, если совпадает с ранее выбранным типом файла -->
                 {% endfor %}
             </select>
 
             <button type="submit">Просмотр файлов</button>
+            <!-- Кнопка для отправки формы и просмотра файлов -->
         </form>
 
         {% if files %}
+        <!-- Условный блок, который отображается, если есть файлы для показа -->
         <h2>Файлы:</h2>
+        <!-- Заголовок для списка файлов -->
         <form method="POST" action="{{ url_for('download_multiple') }}" onsubmit="validateSelection(event)">
+            <!-- Форма для выбора файлов и их последующей загрузки -->
             <input type="hidden" name="public_key" value="{{ public_key }}">
+            <!-- Скрытое поле, передающее публичный ключ при отправке формы -->
             <label>
                 <input type="checkbox" id="select_all" onclick="toggleSelectAll()"> Выбрать все
+                <!-- Чекбокс для выбора всех файлов сразу -->
             </label>
             <ul>
+                <!-- Ненумерованный список для отображения файлов -->
                 {% for file in files %}
+                <!-- Цикл для генерации списка файлов -->
                 <li>
                     <input type="checkbox" name="paths" value="{{ file['path'] }}" onclick="updateSelectAll()">
+                    <!-- Чекбокс для выбора конкретного файла -->
                     {{ file['name'] }} ({{ file['type'] }})
+                    <!-- Имя файла и его тип -->
                     <a href="{{ url_for('download', public_key=public_key, path=file['path']) }}">Скачать</a>
+                    <!-- Ссылка для скачивания отдельного файла -->
                 </li>
                 {% endfor %}
             </ul>
             <button type="submit">Скачать выбранное</button>
+            <!-- Кнопка для скачивания выбранных файлов -->
         </form>
         {% endif %}
+        <!-- Конец условного блока, который отображает файлы, если они есть -->
     </div>
 </body>
+
 </html>
