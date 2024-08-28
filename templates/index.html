@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотрщик файлов Яндекс Диска</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][name="paths"]');
+            const selectAllCheckbox = document.getElementById('select_all');
+            checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+        }
+
+        function updateSelectAll() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][name="paths"]');
+            const selectAllCheckbox = document.getElementById('select_all');
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            selectAllCheckbox.checked = allChecked;
+        }
+
+        function validateSelection(event) {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][name="paths"]');
+            const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+
+            if (!anyChecked) {
+                alert('Пожалуйста, выберите хотя бы один файл для загрузки.');
+                event.preventDefault(); // Останавливаем отправку формы
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Просмотрщик файлов Яндекс Диска</h1>
+        <form method="POST">
+            <label for="public_key">Введите публичную ссылку:</label>
+            <input type="text" id="public_key" name="public_key" value="{{ public_key }}" required>
+
+            <label for="file_type">Тип файла:</label>
+            <select id="file_type" name="file_type">
+                {% for key, value in file_types.items() %}
+                <option value="{{ key }}" {% if selected_file_type == key %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Просмотр файлов</button>
+        </form>
+
+        {% if files %}
+        <h2>Файлы:</h2>
+        <form method="POST" action="{{ url_for('download_multiple') }}" onsubmit="validateSelection(event)">
+            <input type="hidden" name="public_key" value="{{ public_key }}">
+            <label>
+                <input type="checkbox" id="select_all" onclick="toggleSelectAll()"> Выбрать все
+            </label>
+            <ul>
+                {% for file in files %}
+                <li>
+                    <input type="checkbox" name="paths" value="{{ file['path'] }}" onclick="updateSelectAll()">
+                    {{ file['name'] }} ({{ file['type'] }})
+                    <a href="{{ url_for('download', public_key=public_key, path=file['path']) }}">Скачать</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="submit">Скачать выбранное</button>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>
